@@ -7,7 +7,7 @@ const MainLayout = () => {
   return (
     <div className="min-h-screen bg-[#bfd2ff] text-black relative">
       <NavbarTop />
-      <div className="pt-20 pb-24 px-4"> {/* spacing for top & bottom nav */}
+      <div className="px-4 py-16 "> {/* spacing for top & bottom nav */}
         <Outlet />
       </div>
       <Navbar />

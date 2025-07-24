@@ -98,7 +98,9 @@ const List = () => {
   return (
     <div className="mt-6 mb-24 px-4 flex flex-col items-center space-y-6">
       {flashcards.length === 0 ? (
-        <div className="h-screen w-full flex items-center justify-center"><span className="loading loading-spinner loading-xl"></span></div>
+        <div className="h-screen flex items-center justify-center text-black">
+        No flashcards found.
+      </div>
       ) : (
         <>
           <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-3 text-black flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
