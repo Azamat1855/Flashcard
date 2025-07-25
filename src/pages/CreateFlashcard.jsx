@@ -6,23 +6,25 @@ const CreateFlashcard = () => {
   const [definition, setDefinition] = useState('')
 
   const handleSubmit = (e) => {
-    e.preventDefault()
+    e.preventDefault();
   
     const newCard = {
       word,
       translation,
       definition,
       id: Date.now(),
-    }
+    };
   
-    const existingCards = JSON.parse(localStorage.getItem('flashcards')) || []
-    const updatedCards = [...existingCards, newCard]
-    localStorage.setItem('flashcards', JSON.stringify(updatedCards))
+    const stored = localStorage.getItem('flashcards');
+    const existingCards = stored ? JSON.parse(stored) : [];
+    const updatedCards = [...existingCards, newCard];
+    localStorage.setItem('flashcards', JSON.stringify(updatedCards));
   
-    setWord('')
-    setTranslation('')
-    setDefinition('')
-  }
+    setWord('');
+    setTranslation('');
+    setDefinition('');
+  };
+  
 
   return (
     <div className="pb-14 mt-6 flex items-center justify-center px-4 overflow-hidden">

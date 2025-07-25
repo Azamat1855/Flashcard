@@ -8,12 +8,17 @@ const List = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
-  const [editForm, setEditForm] = useState({ word: "", translation: "", definition: "" });
+  const [editForm, setEditForm] = useState({
+    word: "",
+    translation: "",
+    definition: "",
+  });
 
   const fetchFlashcards = async () => {
     return new Promise((resolve) => {
       setTimeout(() => {
-        const data = JSON.parse(localStorage.getItem("flashcards")) || [];
+        const rawData = localStorage.getItem("flashcards");
+        const data = rawData ? JSON.parse(rawData) : [];
         resolve({ data });
       }, 500);
     });
@@ -55,7 +60,9 @@ const List = () => {
   };
 
   const handleConfirmDelete = () => {
-    const updatedFlashcards = flashcards.filter((card) => card.id !== selectedCard.id);
+    const updatedFlashcards = flashcards.filter(
+      (card) => card.id !== selectedCard.id
+    );
     setFlashcards(updatedFlashcards);
     localStorage.setItem("flashcards", JSON.stringify(updatedFlashcards));
     setDeleteModalOpen(false);
@@ -74,9 +81,7 @@ const List = () => {
 
   const handleEditSave = () => {
     const updatedFlashcards = flashcards.map((card) =>
-      card.id === selectedCard.id
-        ? { ...card, ...editForm }
-        : card
+      card.id === selectedCard.id ? { ...card, ...editForm } : card
     );
     setFlashcards(sortFlashcards(updatedFlashcards, sortOption));
     localStorage.setItem("flashcards", JSON.stringify(updatedFlashcards));
@@ -99,13 +104,14 @@ const List = () => {
     <div className="mt-6 mb-24 px-4 flex flex-col items-center space-y-6">
       {flashcards.length === 0 ? (
         <div className="h-screen flex items-center justify-center text-black">
-        No flashcards found.
-      </div>
+          No flashcards found.
+        </div>
       ) : (
         <>
           <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-3 text-black flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <p className="text-sm font-medium text-center sm:text-left">
-              Total Words: <span className="font-semibold">{flashcards.length}</span>
+              Total Words:{" "}
+              <span className="font-semibold">{flashcards.length}</span>
             </p>
             <select
               className="text-sm text-black bg-white/30 backdrop-blur-md border border-white/20 rounded-lg px-3 py-1.5 shadow-sm"
@@ -125,11 +131,14 @@ const List = () => {
               className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl text-black overflow-hidden"
             >
               <div className="bg-gradient-to-l from-indigo-300 to-purple-300 backdrop-blur-sm px-6 py-3 border-b border-white/20">
-                <h2 className="text-lg font-semibold text-center">{card.word}</h2>
+                <h2 className="text-lg font-semibold text-center">
+                  {card.word}
+                </h2>
               </div>
               <div className="px-6 py-4 space-y-2">
                 <p className="text-sm text-center">
-                  <span className="font-medium">Translation:</span> {card.translation}
+                  <span className="font-medium">Translation:</span>{" "}
+                  {card.translation}
                 </p>
                 <p className="italic text-center">{card.definition}</p>
               </div>
@@ -158,7 +167,8 @@ const List = () => {
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-sm w-full text-white">
             <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
             <p className="text-sm mb-6">
-              Are you sure you want to delete the flashcard for "{selectedCard?.word}"?
+              Are you sure you want to delete the flashcard for "
+              {selectedCard?.word}"?
             </p>
             <div className="flex justify-end space-x-4">
               <button

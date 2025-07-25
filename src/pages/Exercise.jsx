@@ -7,30 +7,33 @@ const Exercise = () => {
   const [initialSide, setInitialSide] = useState('word') // 'word' or 'translationAndDefinition'
 
   useEffect(() => {
-    const stored = JSON.parse(localStorage.getItem('flashcards')) || []
-    setFlashcards(stored)
-    // Set initial side randomly for the first card
-    setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition')
+    try {
+      const stored = localStorage.getItem('flashcards')
+      const parsed = stored ? JSON.parse(stored) : []
+      setFlashcards(parsed)
+      setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition')
+    } catch (error) {
+      console.error('Failed to load flashcards:', error)
+      setFlashcards([])
+    }
   }, [])
 
   const getRandomInitialSide = () => {
     return Math.random() > 0.5 ? 'word' : 'translationAndDefinition'
   }
 
-  const handleFlip = () => {
-    setFlipped(!flipped)
-  }
+  const handleFlip = () => setFlipped(!flipped)
 
   const handleNext = () => {
     setFlipped(false)
     setCurrentIndex((prev) => (prev + 1) % flashcards.length)
-    setInitialSide(getRandomInitialSide()) // Randomly set initial side for next card
+    setInitialSide(getRandomInitialSide())
   }
 
   const handlePrev = () => {
     setFlipped(false)
     setCurrentIndex((prev) => (prev === 0 ? flashcards.length - 1 : prev - 1))
-    setInitialSide(getRandomInitialSide()) // Randomly set initial side for previous card
+    setInitialSide(getRandomInitialSide())
   }
 
   const handleShuffle = () => {
@@ -38,7 +41,13 @@ const Exercise = () => {
     setFlashcards(shuffled)
     setCurrentIndex(0)
     setFlipped(false)
-    setInitialSide(getRandomInitialSide()) // Randomly set initial side after shuffle
+    setInitialSide(getRandomInitialSide())
+  }
+
+  const speak = (text) => {
+    const utterance = new SpeechSynthesisUtterance(text)
+    utterance.lang = 'en-US'
+    speechSynthesis.speak(utterance)
   }
 
   if (flashcards.length === 0) {
@@ -73,7 +82,21 @@ const Exercise = () => {
             className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
           >
             {initialSide === 'word' ? (
-              <h2 className="text-xl font-bold text-black">{currentCard.word}</h2>
+              <>
+                <h2 className="text-xl font-bold text-black flex items-center gap-2">
+                  {currentCard.word}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      speak(currentCard.word)
+                    }}
+                    className="text-black text-lg"
+                    title="Listen"
+                  >
+                    🔊
+                  </button>
+                </h2>
+              </>
             ) : (
               <>
                 <p className="text-sm text-center text-black">
@@ -106,7 +129,21 @@ const Exercise = () => {
                 </p>
               </>
             ) : (
-              <h2 className="text-xl font-bold text-black">{currentCard.word}</h2>
+              <>
+                <h2 className="text-xl font-bold text-black flex items-center gap-2">
+                  {currentCard.word}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      speak(currentCard.word)
+                    }}
+                    className="text-black text-lg"
+                    title="Listen"
+                  >
+                    🔊
+                  </button>
+                </h2>
+              </>
             )}
           </div>
         </div>
@@ -114,7 +151,7 @@ const Exercise = () => {
 
       {/* Navigation */}
       <div className="flex space-x-4">
-        {['Previous', 'Shuffle', 'Next'].map((label, i) => {
+        {['Previous', 'Shuffle', 'Next'].map((label) => {
           const action =
             label === 'Previous' ? handlePrev : label === 'Next' ? handleNext : handleShuffle
           return (
