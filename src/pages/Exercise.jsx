@@ -45,10 +45,28 @@ const Exercise = () => {
   }
 
   const speak = (text) => {
-    const utterance = new SpeechSynthesisUtterance(text)
-    utterance.lang = 'en-US'
-    speechSynthesis.speak(utterance)
+    if (!window.speechSynthesis) {
+      console.warn("Speech Synthesis not supported")
+      return
+    }
+  
+    const speakNow = () => {
+      const utterance = new SpeechSynthesisUtterance(text)
+      utterance.lang = 'en-US'
+      speechSynthesis.speak(utterance)
+    }
+  
+    const voicesLoaded = speechSynthesis.getVoices().length > 0
+    if (voicesLoaded) {
+      speakNow()
+    } else {
+      // Wait for voices to load (esp. needed on iOS)
+      speechSynthesis.onvoiceschanged = () => {
+        speakNow()
+      }
+    }
   }
+  
 
   if (flashcards.length === 0) {
     return (
