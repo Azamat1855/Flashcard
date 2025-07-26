@@ -1,22 +1,44 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useContext } from 'react'
+import axios from 'axios'
+import { AuthContext } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 const Exercise = () => {
   const [flashcards, setFlashcards] = useState([])
   const [currentIndex, setCurrentIndex] = useState(0)
   const [flipped, setFlipped] = useState(false)
-  const [initialSide, setInitialSide] = useState('word') // 'word' or 'translationAndDefinition'
+  const [initialSide, setInitialSide] = useState('word')
+  const [error, setError] = useState('')
+  const { user } = useContext(AuthContext)
+  const navigate = useNavigate()
 
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem('flashcards')
-      const parsed = stored ? JSON.parse(stored) : []
-      setFlashcards(parsed)
-      setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition')
-    } catch (error) {
-      console.error('Failed to load flashcards:', error)
-      setFlashcards([])
+    if (!user) {
+      navigate('/login')
+      return
     }
-  }, [])
+    const fetchFlashcards = async () => {
+      try {
+        console.log('Fetching flashcards with token:', user.token)
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        })
+        console.log('Flashcards response:', { status: response.status, data: response.data })
+        setFlashcards(response.data)
+        setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition')
+      } catch (err) {
+        console.error('Fetch flashcards error:', {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+          url: err.config?.url,
+        })
+        setError(err.response?.data?.error || err.message || 'Failed to load flashcards')
+        setFlashcards([])
+      }
+    }
+    fetchFlashcards()
+  }, [user, navigate])
 
   const getRandomInitialSide = () => {
     return Math.random() > 0.5 ? 'word' : 'translationAndDefinition'
@@ -60,13 +82,19 @@ const Exercise = () => {
     if (voicesLoaded) {
       speakNow()
     } else {
-      // Wait for voices to load (esp. needed on iOS)
       speechSynthesis.onvoiceschanged = () => {
         speakNow()
       }
     }
   }
-  
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center text-black">
+        Error: {error}
+      </div>
+    )
+  }
 
   if (flashcards.length === 0) {
     return (
@@ -80,7 +108,6 @@ const Exercise = () => {
 
   return (
     <div className="mt-32 flex flex-col items-center justify-center px-4 space-y-10">
-      {/* Flip Card */}
       <div
         className="w-80 h-52 relative cursor-pointer"
         onClick={handleFlip}
@@ -94,7 +121,6 @@ const Exercise = () => {
           }}
           className="w-full h-full relative"
         >
-          {/* Front Side */}
           <div
             style={{ backfaceVisibility: 'hidden' }}
             className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
@@ -118,7 +144,8 @@ const Exercise = () => {
             ) : (
               <>
                 <p className="text-sm text-center text-black">
-                  <span className="font-semibold">Translation:</span>{' '}
+                  <span className="font-semibold">Translation:</span>
+                  {' '}
                   {currentCard.translation || 'No translation available'}
                 </p>
                 <p className="italic text-center text-black text-sm mt-2">
@@ -127,19 +154,18 @@ const Exercise = () => {
               </>
             )}
           </div>
-
-          {/* Back Side */}
           <div
             style={{
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
             }}
-            className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
+            className="absolute w-full h-full flex flex-col items-center justify-between p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
           >
             {initialSide === 'word' ? (
               <>
                 <p className="text-sm text-center text-black">
-                  <span className="font-semibold">Translation:</span>{' '}
+                  <span className="font-semibold">Translation:</span>
+                  {' '}
                   {currentCard.translation || 'No translation available'}
                 </p>
                 <p className="italic text-center text-black text-sm mt-2">
@@ -166,8 +192,6 @@ const Exercise = () => {
           </div>
         </div>
       </div>
-
-      {/* Navigation */}
       <div className="flex space-x-4">
         {['Previous', 'Shuffle', 'Next'].map((label) => {
           const action =

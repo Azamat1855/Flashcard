@@ -1,104 +1,156 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useContext } from 'react'
+import axios from 'axios'
+import { AuthContext } from '../context/AuthContext'
+import { useNavigate } from 'react-router-dom'
 
 const List = () => {
-  const [flashcards, setFlashcards] = useState([]);
+  const [flashcards, setFlashcards] = useState([])
   const [sortOption, setSortOption] = useState(() => {
-    return localStorage.getItem("sortOption") || "newest";
-  });
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
-  const [editModalOpen, setEditModalOpen] = useState(false);
-  const [selectedCard, setSelectedCard] = useState(null);
+    return localStorage.getItem('sortOption') || 'newest'
+  })
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [selectedCard, setSelectedCard] = useState(null)
   const [editForm, setEditForm] = useState({
-    word: "",
-    translation: "",
-    definition: "",
-  });
+    word: '',
+    translation: '',
+    definition: '',
+  })
+  const [error, setError] = useState('')
+  const { user } = useContext(AuthContext)
+  const navigate = useNavigate()
 
-  const fetchFlashcards = async () => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        const rawData = localStorage.getItem("flashcards");
-        const data = rawData ? JSON.parse(rawData) : [];
-        resolve({ data });
-      }, 500);
-    });
-  };
+  useEffect(() => {
+    if (!user) {
+      navigate('/login')
+      return
+    }
+    const fetchFlashcards = async () => {
+      try {
+        console.log('Fetching flashcards with token:', user.token)
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
+          headers: { Authorization: `Bearer ${user.token}` },
+        })
+        console.log('Flashcards response:', { status: response.status, data: response.data })
+        const sorted = sortFlashcards(response.data, sortOption)
+        setFlashcards(sorted)
+      } catch (err) {
+        console.error('Fetch flashcards error:', {
+          message: err.message,
+          status: err.response?.status,
+          data: err.response?.data,
+          url: err.config?.url,
+        })
+        setError(err.response?.data?.error || err.message || 'Failed to load flashcards')
+        setFlashcards([])
+      }
+    }
+    fetchFlashcards()
+  }, [sortOption, user, navigate])
+
+  useEffect(() => {
+    localStorage.setItem('sortOption', sortOption)
+  }, [sortOption])
 
   const sortFlashcards = (cards, option) => {
-    const sorted = [...cards];
+    const sorted = [...cards]
     switch (option) {
-      case "newest":
-        return sorted.reverse();
-      case "oldest":
-        return sorted;
-      case "az":
-        return sorted.sort((a, b) => a.word.localeCompare(b.word));
-      case "za":
-        return sorted.sort((a, b) => b.word.localeCompare(a.word));
+      case 'newest':
+        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+      case 'oldest':
+        return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+      case 'az':
+        return sorted.sort((a, b) => a.word.localeCompare(b.word))
+      case 'za':
+        return sorted.sort((a, b) => b.word.localeCompare(a.word))
       default:
-        return sorted;
+        return sorted
     }
-  };
-
-  useEffect(() => {
-    const getData = async () => {
-      const response = await fetchFlashcards();
-      const sorted = sortFlashcards(response.data, sortOption);
-      setFlashcards(sorted);
-    };
-
-    getData();
-  }, [sortOption]);
-
-  useEffect(() => {
-    localStorage.setItem("sortOption", sortOption);
-  }, [sortOption]);
+  }
 
   const handleDeleteClick = (card) => {
-    setSelectedCard(card);
-    setDeleteModalOpen(true);
-  };
+    setSelectedCard(card)
+    setDeleteModalOpen(true)
+  }
 
-  const handleConfirmDelete = () => {
-    const updatedFlashcards = flashcards.filter(
-      (card) => card.id !== selectedCard.id
-    );
-    setFlashcards(updatedFlashcards);
-    localStorage.setItem("flashcards", JSON.stringify(updatedFlashcards));
-    setDeleteModalOpen(false);
-    setSelectedCard(null);
-  };
+  const handleConfirmDelete = async () => {
+    try {
+      console.log('Deleting flashcard:', selectedCard._id)
+      await axios.delete(`${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`, {
+        headers: { Authorization: `Bearer ${user.token}` },
+      })
+      console.log('Flashcard deleted successfully')
+      setFlashcards(flashcards.filter((card) => card._id !== selectedCard._id))
+      setDeleteModalOpen(false)
+      setSelectedCard(null)
+    } catch (err) {
+      console.error('Delete flashcard error:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        url: err.config?.url,
+      })
+      setError(err.response?.data?.error || err.message || 'Failed to delete flashcard')
+    }
+  }
 
   const handleEditClick = (card) => {
-    setSelectedCard(card);
+    setSelectedCard(card)
     setEditForm({
       word: card.word,
       translation: card.translation,
       definition: card.definition,
-    });
-    setEditModalOpen(true);
-  };
+    })
+    setEditModalOpen(true)
+  }
 
-  const handleEditSave = () => {
-    const updatedFlashcards = flashcards.map((card) =>
-      card.id === selectedCard.id ? { ...card, ...editForm } : card
-    );
-    setFlashcards(sortFlashcards(updatedFlashcards, sortOption));
-    localStorage.setItem("flashcards", JSON.stringify(updatedFlashcards));
-    setEditModalOpen(false);
-    setSelectedCard(null);
-  };
+  const handleEditSave = async () => {
+    try {
+      console.log('Updating flashcard:', selectedCard._id, editForm)
+      const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`, editForm, {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${user.token}`,
+        },
+      })
+      console.log('Flashcard updated:', response.data)
+      setFlashcards(
+        sortFlashcards(
+          flashcards.map((card) => (card._id === selectedCard._id ? response.data : card)),
+          sortOption
+        )
+      )
+      setEditModalOpen(false)
+      setSelectedCard(null)
+    } catch (err) {
+      console.error('Update flashcard error:', {
+        message: err.message,
+        status: err.response?.status,
+        data: err.response?.data,
+        url: err.config?.url,
+      })
+      setError(err.response?.data?.error || err.message || 'Failed to update flashcard')
+    }
+  }
 
   const handleEditChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm((prev) => ({ ...prev, [name]: value }));
-  };
+    const { name, value } = e.target
+    setEditForm((prev) => ({ ...prev, [name]: value }))
+  }
 
   const closeModals = () => {
-    setDeleteModalOpen(false);
-    setEditModalOpen(false);
-    setSelectedCard(null);
-  };
+    setDeleteModalOpen(false)
+    setEditModalOpen(false)
+    setSelectedCard(null)
+  }
+
+  if (error) {
+    return (
+      <div className="h-screen flex items-center justify-center text-black">
+        Error: {error}
+      </div>
+    )
+  }
 
   return (
     <div className="mt-6 mb-24 px-4 flex flex-col items-center space-y-6">
@@ -110,8 +162,7 @@ const List = () => {
         <>
           <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-3 text-black flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <p className="text-sm font-medium text-center sm:text-left">
-              Total Words:{" "}
-              <span className="font-semibold">{flashcards.length}</span>
+              Total Words: <span className="font-semibold">{flashcards.length}</span>
             </p>
             <select
               className="text-sm text-black bg-white/30 backdrop-blur-md border border-white/20 rounded-lg px-3 py-1.5 shadow-sm"
@@ -127,18 +178,15 @@ const List = () => {
 
           {flashcards.map((card) => (
             <div
-              key={card.id}
+              key={card._id}
               className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl text-black overflow-hidden"
             >
               <div className="bg-gradient-to-l from-indigo-300 to-purple-300 backdrop-blur-sm px-6 py-3 border-b border-white/20">
-                <h2 className="text-lg font-semibold text-center">
-                  {card.word}
-                </h2>
+                <h2 className="text-lg font-semibold text-center">{card.word}</h2>
               </div>
               <div className="px-6 py-4 space-y-2">
                 <p className="text-sm text-center">
-                  <span className="font-medium">Translation:</span>{" "}
-                  {card.translation}
+                  <span className="font-medium">Translation:</span> {card.translation}
                 </p>
                 <p className="italic text-center">{card.definition}</p>
               </div>
@@ -161,14 +209,12 @@ const List = () => {
         </>
       )}
 
-      {/* Delete Confirmation Modal */}
       {deleteModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-sm w-full text-white">
             <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
             <p className="text-sm mb-6">
-              Are you sure you want to delete the flashcard for "
-              {selectedCard?.word}"?
+              Are you sure you want to delete the flashcard for "{selectedCard?.word}"?
             </p>
             <div className="flex justify-end space-x-4">
               <button
@@ -188,7 +234,6 @@ const List = () => {
         </div>
       )}
 
-      {/* Edit Modal */}
       {editModalOpen && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-sm w-full text-white">
@@ -246,7 +291,7 @@ const List = () => {
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default List;
+export default List
