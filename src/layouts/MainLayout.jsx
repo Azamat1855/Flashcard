@@ -1,8 +1,7 @@
-import React, { useContext } from 'react'
-import { Outlet } from 'react-router-dom'
-import Navbar from '../components/Navbar'
-import NavbarTop from '../components/NavbarTop'
-import { AuthContext } from '../context/AuthContext'
+import React from 'react';
+import { Outlet } from 'react-router-dom';
+import Navbar from '../components/Navbar';
+import NavbarTop from '../components/NavbarTop';
 
 const MainLayout = () => {
   return (
@@ -13,7 +12,7 @@ const MainLayout = () => {
       </div>
       <Navbar />
     </div>
-  )
-}
+  );
+};
 
-export default MainLayout
+export default MainLayout;

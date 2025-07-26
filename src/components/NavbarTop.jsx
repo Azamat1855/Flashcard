@@ -1,29 +1,31 @@
-import React, { useContext, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
-import { AuthContext } from '../context/AuthContext'
-import { LuLogOut } from "react-icons/lu";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+
+import { LuLogOut } from 'react-icons/lu';
+import { logout } from '../redux/authSlice';
 
 const NavbarTop = () => {
-  const { user, logout } = useContext(AuthContext)
-  const navigate = useNavigate()
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const { user } = useSelector((state) => state.auth);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const handleLogoutClick = () => {
-    setIsModalOpen(true)
-  }
+    setIsModalOpen(true);
+  };
 
   const handleConfirmLogout = () => {
-    logout()
-    setIsModalOpen(false)
-    navigate('/login')
-  }
+    dispatch(logout());
+    setIsModalOpen(false);
+    navigate('/login');
+  };
 
   const handleCancelLogout = () => {
-    setIsModalOpen(false)
-  }
+    setIsModalOpen(false);
+  };
 
-  // Get email prefix before '@' or empty string if no user/email
-  const emailPrefix = user?.email ? user.email.split('@')[0].toUpperCase() : ''
+  const emailPrefix = user?.email ? user.email.split('@')[0].toUpperCase() : '';
 
   return (
     <>
@@ -47,8 +49,8 @@ const NavbarTop = () => {
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
           <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-6 w-[90%] max-w-sm">
-            <h2 className="text-xl font-bold text-white text-center mb-4">Confirm Logout</h2>
-            <p className="text-white text-center mb-6">Are you sure you want to log out?</p>
+            <h2 className="text-xl font-bold text-black text-center mb-4">Confirm Logout</h2>
+            <p className="text-black text-center mb-6">Are you sure you want to log out?</p>
             <div className="flex justify-center gap-4">
               <button
                 onClick={handleConfirmLogout}
@@ -67,7 +69,7 @@ const NavbarTop = () => {
         </div>
       )}
     </>
-  )
-}
+  );
+};
 
-export default NavbarTop
+export default NavbarTop;

@@ -1,155 +1,159 @@
-import React, { useEffect, useState, useContext } from 'react'
-import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const List = () => {
-  const [flashcards, setFlashcards] = useState([])
+  const [flashcards, setFlashcards] = useState([]);
   const [sortOption, setSortOption] = useState(() => {
-    return localStorage.getItem('sortOption') || 'newest'
-  })
-  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
-  const [editModalOpen, setEditModalOpen] = useState(false)
-  const [selectedCard, setSelectedCard] = useState(null)
+    return localStorage.getItem('sortOption') || 'newest';
+  });
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [selectedCard, setSelectedCard] = useState(null);
   const [editForm, setEditForm] = useState({
     word: '',
     translation: '',
     definition: '',
-  })
-  const [error, setError] = useState('')
-  const { user } = useContext(AuthContext)
-  const navigate = useNavigate()
+  });
+  const [error, setError] = useState('');
+  const { user } = useSelector((state) => state.auth); // Access user from Redux
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (!user) {
-      navigate('/login')
-      return
+      navigate('/login');
+      return;
     }
     const fetchFlashcards = async () => {
       try {
-        console.log('Fetching flashcards with token:', user.token)
+        console.log('Fetching flashcards with token:', user.token);
         const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
           headers: { Authorization: `Bearer ${user.token}` },
-        })
-        console.log('Flashcards response:', { status: response.status, data: response.data })
-        const sorted = sortFlashcards(response.data, sortOption)
-        setFlashcards(sorted)
+        });
+        console.log('Flashcards response:', { status: response.status, data: response.data });
+        const sorted = sortFlashcards(response.data, sortOption);
+        setFlashcards(sorted);
       } catch (err) {
         console.error('Fetch flashcards error:', {
           message: err.message,
           status: err.response?.status,
           data: err.response?.data,
           url: err.config?.url,
-        })
-        setError(err.response?.data?.error || err.message || 'Failed to load flashcards')
-        setFlashcards([])
+        });
+        setError(err.response?.data?.error || err.message || 'Failed to load flashcards');
+        setFlashcards([]);
       }
-    }
-    fetchFlashcards()
-  }, [sortOption, user, navigate])
+    };
+    fetchFlashcards();
+  }, [sortOption, user, navigate]);
 
   useEffect(() => {
-    localStorage.setItem('sortOption', sortOption)
-  }, [sortOption])
+    localStorage.setItem('sortOption', sortOption);
+  }, [sortOption]);
 
   const sortFlashcards = (cards, option) => {
-    const sorted = [...cards]
+    const sorted = [...cards];
     switch (option) {
       case 'newest':
-        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+        return sorted.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       case 'oldest':
-        return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
+        return sorted.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
       case 'az':
-        return sorted.sort((a, b) => a.word.localeCompare(b.word))
+        return sorted.sort((a, b) => a.word.localeCompare(b.word));
       case 'za':
-        return sorted.sort((a, b) => b.word.localeCompare(a.word))
+        return sorted.sort((a, b) => b.word.localeCompare(a.word));
       default:
-        return sorted
+        return sorted;
     }
-  }
+  };
 
   const handleDeleteClick = (card) => {
-    setSelectedCard(card)
-    setDeleteModalOpen(true)
-  }
+    setSelectedCard(card);
+    setDeleteModalOpen(true);
+  };
 
   const handleConfirmDelete = async () => {
     try {
-      console.log('Deleting flashcard:', selectedCard._id)
+      console.log('Deleting flashcard:', selectedCard._id);
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
-      })
-      console.log('Flashcard deleted successfully')
-      setFlashcards(flashcards.filter((card) => card._id !== selectedCard._id))
-      setDeleteModalOpen(false)
-      setSelectedCard(null)
+      });
+      console.log('Flashcard deleted successfully');
+      setFlashcards(flashcards.filter((card) => card._id !== selectedCard._id));
+      setDeleteModalOpen(false);
+      setSelectedCard(null);
     } catch (err) {
       console.error('Delete flashcard error:', {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
         url: err.config?.url,
-      })
-      setError(err.response?.data?.error || err.message || 'Failed to delete flashcard')
+      });
+      setError(err.response?.data?.error || err.message || 'Failed to delete flashcard');
     }
-  }
+  };
 
   const handleEditClick = (card) => {
-    setSelectedCard(card)
+    setSelectedCard(card);
     setEditForm({
       word: card.word,
       translation: card.translation,
       definition: card.definition,
-    })
-    setEditModalOpen(true)
-  }
+    });
+    setEditModalOpen(true);
+  };
 
   const handleEditSave = async () => {
     try {
-      console.log('Updating flashcard:', selectedCard._id, editForm)
-      const response = await axios.put(`${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`, editForm, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`,
-        },
-      })
-      console.log('Flashcard updated:', response.data)
+      console.log('Updating flashcard:', selectedCard._id, editForm);
+      const response = await axios.put(
+        `${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`,
+        editForm,
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      console.log('Flashcard updated:', response.data);
       setFlashcards(
         sortFlashcards(
           flashcards.map((card) => (card._id === selectedCard._id ? response.data : card)),
           sortOption
         )
-      )
-      setEditModalOpen(false)
-      setSelectedCard(null)
+      );
+      setEditModalOpen(false);
+      setSelectedCard(null);
     } catch (err) {
       console.error('Update flashcard error:', {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
         url: err.config?.url,
-      })
-      setError(err.response?.data?.error || err.message || 'Failed to update flashcard')
+      });
+      setError(err.response?.data?.error || err.message || 'Failed to update flashcard');
     }
-  }
+  };
 
   const handleEditChange = (e) => {
-    const { name, value } = e.target
-    setEditForm((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setEditForm((prev) => ({ ...prev, [name]: value }));
+  };
 
   const closeModals = () => {
-    setDeleteModalOpen(false)
-    setEditModalOpen(false)
-    setSelectedCard(null)
-  }
+    setDeleteModalOpen(false);
+    setEditModalOpen(false);
+    setSelectedCard(null);
+  };
 
   if (error) {
     return (
       <div className="h-screen flex items-center justify-center text-black">
         Error: {error}
       </div>
-    )
+    );
   }
 
   return (
@@ -291,7 +295,7 @@ const List = () => {
         </div>
       )}
     </div>
-  )
-}
+  );
+};
 
-export default List
+export default List;

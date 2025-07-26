@@ -1,51 +1,55 @@
-import React, { useState, useContext } from 'react'
-import axios from 'axios'
-import { AuthContext } from '../context/AuthContext'
-import { useNavigate } from 'react-router-dom'
+import React, { useState } from 'react';
+import axios from 'axios';
+import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 const CreateFlashcard = () => {
-  const [word, setWord] = useState('')
-  const [translation, setTranslation] = useState('')
-  const [definition, setDefinition] = useState('')
-  const [error, setError] = useState('')
-  const { user } = useContext(AuthContext)
-  const navigate = useNavigate()
+  const [word, setWord] = useState('');
+  const [translation, setTranslation] = useState('');
+  const [definition, setDefinition] = useState('');
+  const [error, setError] = useState('');
+  const { user } = useSelector((state) => state.auth); // Access user from Redux
+  const navigate = useNavigate();
 
   if (!user) {
-    navigate('/login')
-    return null
+    navigate('/login');
+    return null;
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
     try {
-      console.log('Creating flashcard:', { word, translation, definition })
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
-        word,
-        translation,
-        definition,
-      }, {
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${user.token}`,
+      console.log('Creating flashcard:', { word, translation, definition });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/flashcards`,
+        {
+          word,
+          translation,
+          definition,
         },
-      })
-      console.log('Create flashcard response:', { status: response.status, data: response.data })
-      setWord('')
-      setTranslation('')
-      setDefinition('')
-      navigate('/list')
+        {
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${user.token}`,
+          },
+        }
+      );
+      console.log('Create flashcard response:', { status: response.status, data: response.data });
+      setWord('');
+      setTranslation('');
+      setDefinition('');
+      navigate('/list');
     } catch (err) {
       console.error('Create flashcard error:', {
         message: err.message,
         status: err.response?.status,
         data: err.response?.data,
         url: err.config?.url,
-      })
-      setError(err.response?.data?.error || err.message || 'Failed to create flashcard')
+      });
+      setError(err.response?.data?.error || err.message || 'Failed to create flashcard');
     }
-  }
+  };
 
   return (
     <div className="pb-14 mt-6 flex items-center justify-center px-4 overflow-hidden">
@@ -96,7 +100,7 @@ const CreateFlashcard = () => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default CreateFlashcard
+export default CreateFlashcard;
