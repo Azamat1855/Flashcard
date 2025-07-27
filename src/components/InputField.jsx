@@ -1,11 +1,11 @@
 import React from 'react';
 
-const InputField = ({ label, type = 'text', name, value, onChange, placeholder, required = false, isTextarea = false }) => {
+const InputField = ({ label, type = 'text', name, value, onChange, placeholder, required = false, isTextarea = false, textColor = 'text-black' }) => {
   const commonClasses = 'w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20';
   
   return (
     <div>
-      <label className="text-black text-sm mb-1 block">{label}</label>
+      <label className={`${textColor} text-sm mb-1 block`}>{label}</label>
       {isTextarea ? (
         <textarea
           name={name}
@@ -30,4 +30,4 @@ const InputField = ({ label, type = 'text', name, value, onChange, placeholder, 
   );
 };
 
-export default InputField;
+export default InputField; 

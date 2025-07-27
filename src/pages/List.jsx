@@ -244,6 +244,7 @@ const List = () => {
             value={editForm.definition}
             onChange={handleEditChange}
             placeholder="Enter definition"
+            isTextarea
           />
         </div>
       </Modal>

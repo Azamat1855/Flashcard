@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import { register } from '../redux/authSlice';
-
+import InputField from '../components/InputField';
+import ErrorMessage from '../components/ErrorMessage';
+import Button from '../components/Button';
+import CardContainer from '../components/CardContainer';
+import { useTheme } from '../components/ThemeContext';
 
 const Register = () => {
   const [email, setEmail] = useState('');
@@ -11,6 +15,7 @@ const Register = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading, error: reduxError } = useSelector((state) => state.auth);
+  const { textColor } = useTheme();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -27,47 +32,46 @@ const Register = () => {
 
   return (
     <div className="h-screen flex items-center justify-center px-4">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-6 space-y-4">
-        <h2 className="text-2xl font-bold text-black text-center">Register</h2>
-        {(error || reduxError) && <p className="text-red-500 text-center">{error || reduxError}</p>}
+      <CardContainer className="space-y-4">
+        <h2 className={`text-2xl font-bold ${textColor} text-center`}>Register</h2>
+        <ErrorMessage error={error || reduxError} />
         <div className="space-y-4">
-          <div>
-            <label className="text-black text-sm mb-1 block">Email</label>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
-              placeholder="Enter email"
-              required
-            />
-          </div>
-          <div>
-            <label className="text-black text-sm mb-1 block">Password</label>
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
-              placeholder="Enter password"
-              required
-            />
-          </div>
-          <button
+          <InputField
+            label="Email"
+            type="email"
+            name="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="Enter email"
+            required
+            textColor={textColor}
+          />
+          <InputField
+            label="Password"
+            type="password"
+            name="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Enter password"
+            required
+            textColor={textColor}
+          />
+          <Button
             onClick={handleSubmit}
+            variant="primary"
             disabled={loading}
-            className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-1.5 rounded-xl font-semibold hover:opacity-90 transition-all disabled:opacity-50"
+            className="w-full disabled:opacity-50"
           >
             {loading ? 'Registering...' : 'Register'}
-          </button>
-          <p className="text-black text-sm text-center">
+          </Button>
+          <p className={`${textColor} text-sm text-center`}>
             Already have an account?{' '}
             <a href="/login" className="text-indigo-500 hover:underline">
               Login
             </a>
           </p>
         </div>
-      </div>
+      </CardContainer>
     </div>
   );
 };
