@@ -2,13 +2,17 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import InputField from '../components/InputField';
+import ErrorMessage from '../components/ErrorMessage';
+import Button from '../components/Button';
+import CardContainer from '../components/CardContainer';
 
 const CreateFlashcard = () => {
   const [word, setWord] = useState('');
   const [translation, setTranslation] = useState('');
   const [definition, setDefinition] = useState('');
   const [error, setError] = useState('');
-  const { user } = useSelector((state) => state.auth); // Access user from Redux
+  const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   if (!user) {
@@ -53,52 +57,39 @@ const CreateFlashcard = () => {
 
   return (
     <div className="pb-14 mt-6 flex items-center justify-center px-4 overflow-hidden">
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-4 space-y-3">
-        {error && <p className="text-red-500 text-center">{error}</p>}
+      <CardContainer className="space-y-3">
+        <ErrorMessage error={error} />
         <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="text-black text-sm mb-1 block">Word</label>
-            <input
-              type="text"
-              value={word}
-              onChange={(e) => setWord(e.target.value)}
-              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
-              placeholder="Enter word"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-black text-sm mb-1 block">Translation</label>
-            <input
-              type="text"
-              value={translation}
-              onChange={(e) => setTranslation(e.target.value)}
-              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
-              placeholder="Enter translation"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-black text-sm mb-1 block">Definition</label>
-            <textarea
-              value={definition}
-              onChange={(e) => setDefinition(e.target.value)}
-              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20 resize-none h-20"
-              placeholder="Enter definition"
-              required
-            ></textarea>
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-gradient-to-r from-indigo-500 to-purple-500 text-white py-1.5 rounded-xl font-semibold hover:opacity-90 transition-all"
-          >
+          <InputField
+            label="Word"
+            name="word"
+            value={word}
+            onChange={(e) => setWord(e.target.value)}
+            placeholder="Enter word"
+            required
+          />
+          <InputField
+            label="Translation"
+            name="translation"
+            value={translation}
+            onChange={(e) => setTranslation(e.target.value)}
+            placeholder="Enter translation"
+            required
+          />
+          <InputField
+            label="Definition"
+            name="definition"
+            value={definition}
+            onChange={(e) => setDefinition(e.target.value)}
+            placeholder="Enter definition"
+            required
+            isTextarea
+          />
+          <Button type="submit" variant="primary">
             Save Flashcard
-          </button>
+          </Button>
         </form>
-      </div>
+      </CardContainer>
     </div>
   );
 };

@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import ErrorMessage from '../components/ErrorMessage';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
+import CardContainer from '../components/CardContainer';
+import InputField from '../components/InputField';
+import FlashcardItem from '../components/FlashcardItem';
 
 const List = () => {
   const [flashcards, setFlashcards] = useState([]);
-  const [sortOption, setSortOption] = useState(() => {
-    return localStorage.getItem('sortOption') || 'newest';
-  });
+  const [sortOption, setSortOption] = useState(() => localStorage.getItem('sortOption') || 'newest');
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -17,7 +21,7 @@ const List = () => {
     definition: '',
   });
   const [error, setError] = useState('');
-  const { user } = useSelector((state) => state.auth); // Access user from Redux
+  const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -62,7 +66,7 @@ const List = () => {
       case 'az':
         return sorted.sort((a, b) => a.word.localeCompare(b.word));
       case 'za':
-        return sorted.sort((a, b) => b.word.localeCompare(a.word));
+        return sorted.sort((a, b) => b.word.localeCompare(b.word));
       default:
         return sorted;
     }
@@ -75,7 +79,7 @@ const List = () => {
 
   const handleConfirmDelete = async () => {
     try {
-      console.log('Deleting flashcard:', selectedCard._id);
+      console.log(('Deleting flashcard:', selectedCard._id));
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
@@ -151,7 +155,7 @@ const List = () => {
   if (error) {
     return (
       <div className="h-screen flex items-center justify-center text-black">
-        Error: {error}
+        <ErrorMessage error={error} />
       </div>
     );
   }
@@ -159,12 +163,13 @@ const List = () => {
   return (
     <div className="mt-6 mb-24 px-4 flex flex-col items-center space-y-6">
       {flashcards.length === 0 ? (
-        <div className="h-screen flex items-center justify-center text-black">
+        <div ShooterView
+          className="h-screen flex items-center justify-center text-black">
           No flashcards found.
         </div>
       ) : (
         <>
-          <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-3 text-black flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
+          <CardContainer className="text-black flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
             <p className="text-sm font-medium text-center sm:text-left">
               Total Words: <span className="font-semibold">{flashcards.length}</span>
             </p>
@@ -178,122 +183,70 @@ const List = () => {
               <option value="az">A–Z</option>
               <option value="za">Z–A</option>
             </select>
-          </div>
+          </CardContainer>
 
           {flashcards.map((card) => (
-            <div
+            <FlashcardItem
               key={card._id}
-              className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl text-black overflow-hidden"
-            >
-              <div className="bg-gradient-to-l from-indigo-300 to-purple-300 backdrop-blur-sm px-6 py-3 border-b border-white/20">
-                <h2 className="text-lg font-semibold text-center">{card.word}</h2>
-              </div>
-              <div className="px-6 py-4 space-y-2">
-                <p className="text-sm text-center">
-                  <span className="font-medium">Translation:</span> {card.translation}
-                </p>
-                <p className="italic text-center">{card.definition}</p>
-              </div>
-              <div className="flex border-t border-white/20">
-                <button
-                  onClick={() => handleEditClick(card)}
-                  className="w-1/2 px-4 py-2 bg-white/20 text-black border-r border-white/20 hover:bg-white/30 transition"
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => handleDeleteClick(card)}
-                  className="w-1/2 px-4 py-2 bg-white/20 text-black hover:bg-white/30 transition"
-                >
-                  Delete
-                </button>
-              </div>
-            </div>
+              card={card}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+            />
           ))}
         </>
       )}
 
-      {deleteModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-sm w-full text-white">
-            <h3 className="text-lg font-semibold mb-4">Confirm Deletion</h3>
-            <p className="text-sm mb-6">
-              Are you sure you want to delete the flashcard for "{selectedCard?.word}"?
-            </p>
-            <div className="flex justify-end space-x-4">
-              <button
-                onClick={closeModals}
-                className="px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white hover:bg-white/30 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleConfirmDelete}
-                className="px-4 py-2 bg-red-500/80 text-white rounded-lg hover:bg-red-600 transition"
-              >
-                Confirm
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={deleteModalOpen}
+        onClose={closeModals}
+        title="Confirm Deletion"
+        footer={
+          <>
+            <Button onClick={closeModals} variant="secondary">Cancel</Button>
+            <Button onClick={handleConfirmDelete} variant="danger">Delete</Button>
+          </>
+        }
+      >
+        <p className="text-sm mb-6">
+          Are you sure you want to delete the flashcard for "{selectedCard?.word}"?
+        </p>
+      </Modal>
 
-      {editModalOpen && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-6 max-w-sm w-full text-white">
-            <h3 className="text-lg font-semibold mb-4">Edit Flashcard</h3>
-            <div className="space-y-4">
-              <div>
-                <label className="text-sm font-medium">Word</label>
-                <input
-                  type="text"
-                  name="word"
-                  value={editForm.word}
-                  onChange={handleEditChange}
-                  className="w-full mt-1 px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-white"
-                  placeholder="Enter word"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Translation</label>
-                <input
-                  type="text"
-                  name="translation"
-                  value={editForm.translation}
-                  onChange={handleEditChange}
-                  className="w-full mt-1 px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-white"
-                  placeholder="Enter translation"
-                />
-              </div>
-              <div>
-                <label className="text-sm font-medium">Definition</label>
-                <input
-                  type="text"
-                  name="definition"
-                  value={editForm.definition}
-                  onChange={handleEditChange}
-                  className="w-full mt-1 px-3 py-2 bg-white/20 border border-white/20 rounded-lg text-white"
-                  placeholder="Enter definition"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-4 mt-6">
-              <button
-                onClick={closeModals}
-                className="px-4 py-2 bg-white/20 border border-white/20 rounded-lg text-white hover:bg-white/30 transition"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleEditSave}
-                className="px-4 py-2 bg-indigo-500/80 text-white rounded-lg hover:bg-indigo-600 transition"
-              >
-                Save
-              </button>
-            </div>
-          </div>
+      <Modal
+        isOpen={editModalOpen}
+        onClose={closeModals}
+        title="Edit Flashcard"
+        footer={
+          <>
+            <Button onClick={closeModals} variant="secondary">Cancel</Button>
+            <Button onClick={handleEditSave} variant="primary">Save</Button>
+          </>
+        }
+      >
+        <div className="space-y-4">
+          <InputField
+            label="Word"
+            name="word"
+            value={editForm.word}
+            onChange={handleEditChange}
+            placeholder="Enter word"
+          />
+          <InputField
+            label="Translation"
+            name="translation"
+            value={editForm.translation}
+            onChange={handleEditChange}
+            placeholder="Enter translation"
+          />
+          <InputField
+            label="Definition"
+            name="definition"
+            value={editForm.definition}
+            onChange={handleEditChange}
+            placeholder="Enter definition"
+          />
         </div>
-      )}
+      </Modal>
     </div>
   );
 };

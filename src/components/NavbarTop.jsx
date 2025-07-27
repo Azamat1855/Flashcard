@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-
 import { LuLogOut } from 'react-icons/lu';
 import { logout } from '../redux/authSlice';
+import Modal from '../components/Modal';
+import Button from '../components/Button';
 
 const NavbarTop = () => {
   const { user } = useSelector((state) => state.auth);
@@ -35,39 +36,37 @@ const NavbarTop = () => {
         </h1>
         {user && (
           <div className="flex items-center gap-3">
-            <button
+            <Button
               onClick={handleLogoutClick}
-              className="px-4 py-1.5 flex items-center justify-center gap-2 bg-red-500/80 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
+              variant="danger"
+              className="flex items-center justify-center gap-2 text-sm font-medium"
             >
               {emailPrefix}
               <LuLogOut />
-            </button>
+            </Button>
           </div>
         )}
       </div>
 
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-          <div className="bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-6 w-[90%] max-w-sm">
-            <h2 className="text-xl font-bold text-black text-center mb-4">Confirm Logout</h2>
-            <p className="text-black text-center mb-6">Are you sure you want to log out?</p>
-            <div className="flex justify-center gap-4">
-              <button
-                onClick={handleConfirmLogout}
-                className="px-4 py-1.5 bg-red-500/80 text-white rounded-lg hover:bg-red-600 transition text-sm font-medium"
-              >
-                Yes, Logout
-              </button>
-              <button
-                onClick={handleCancelLogout}
-                className="px-4 py-1.5 bg-gray-500/80 text-white rounded-lg hover:bg-gray-600 transition text-sm font-medium"
-              >
-                Cancel
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <Modal
+        isOpen={isModalOpen}
+        onClose={handleCancelLogout}
+        title="Confirm Logout"
+        footer={
+          <>
+            <Button onClick={handleCancelLogout} variant="secondary" className="text-sm font-medium">
+              Cancel
+            </Button>
+            <Button onClick={handleConfirmLogout} variant="danger" className="text-sm font-medium">
+              Yes, Logout
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm mb-6 text-white text-center">
+          Are you sure you want to log out?
+        </p>
+      </Modal>
     </>
   );
 };
