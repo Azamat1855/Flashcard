@@ -1,8 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { FaExchangeAlt, FaKeyboard, FaList, FaBook, FaSyncAlt } from 'react-icons/fa';
-
+import { GoArrowSwitch } from "react-icons/go";
+import { IoSyncOutline } from "react-icons/io5";
+import { BsKeyboard } from "react-icons/bs";
+import { IoIosList } from "react-icons/io";
 const Exercise = () => {
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -16,25 +18,25 @@ const Exercise = () => {
     {
       title: 'Flashcard Flip',
       description: 'Flip through flashcards to test your memory of words and their meanings.',
-      icon: <FaExchangeAlt className="text-indigo-500 text-2xl" />,
+      icon: <GoArrowSwitch  className="text-indigo-500 text-2xl" />,
       path: '/exercise/flip',
     },
     {
       title: 'Flashcard Flip (Selected)',
       description: 'Choose specific flashcards to flip through and test your memory.',
-      icon: <FaSyncAlt className="text-indigo-500 text-2xl" />,
+      icon: <IoSyncOutline  className="text-indigo-500 text-2xl" />,
       path: '/exercise/flip-selected',
     },
     {
       title: 'Spelling Practice',
       description: 'Type the correct word based on its translation and definition.',
-      icon: <FaKeyboard className="text-indigo-500 text-2xl" />,
+      icon: <BsKeyboard  className="text-indigo-500 text-2xl" />,
       path: '/exercise/spelling',
     },
     {
       title: 'Spelling Practice (Selected)',
       description: 'Choose specific words to focus on for a customized practice session.',
-      icon: <FaList className="text-indigo-500 text-2xl" />,
+      icon: <IoIosList  className="text-indigo-500 text-2xl" />,
       path: '/exercise/select',
     },
     

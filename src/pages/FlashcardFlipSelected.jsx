@@ -10,68 +10,151 @@ const FlashcardFlipSelected = () => {
   const [selectedCards, setSelectedCards] = useState([]);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
+  const [initialSide, setInitialSide] = useState('word');
   const [isPracticing, setIsPracticing] = useState(false);
   const [error, setError] = useState('');
   const { user } = useSelector((state) => state.auth);
-  const { textColor } = useTheme();
   const navigate = useNavigate();
+  const themeContext = useTheme();
+  const textColor = themeContext ? themeContext.textColor : 'text-black';
 
   useEffect(() => {
-    if (!user) {
+    console.log('FlashcardFlipSelected mounted, user:', user);
+    if (!user || !user.token) {
+      console.log('No user or token, redirecting to /login');
       navigate('/login');
       return;
     }
     const fetchFlashcards = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
+        const apiUrl = import.meta.env.VITE_API_URL;
+        if (!apiUrl) {
+          throw new Error('VITE_API_URL is not defined in .env');
+        }
+        console.log('Fetching flashcards from:', `${apiUrl}/api/flashcards`, 'with token:', user.token);
+        const response = await axios.get(`${apiUrl}/api/flashcards`, {
           headers: { Authorization: `Bearer ${user.token}` },
         });
-        setFlashcards(response.data);
+        console.log('Flashcards response:', response.data);
+        setFlashcards(Array.isArray(response.data) ? response.data : []);
       } catch (err) {
-        setError(err.response?.data?.error || 'Failed to load flashcards');
+        const errorMsg = err.response?.data?.error || err.message || 'Failed to load flashcards';
+        console.error('Fetch flashcards error:', {
+          status: err.response?.status,
+          message: errorMsg,
+          url: err.config?.url,
+        });
+        setError(errorMsg);
         setFlashcards([]);
       }
     };
     fetchFlashcards();
   }, [user, navigate]);
 
+  const getRandomInitialSide = () => {
+    return Math.random() > 0.5 ? 'word' : 'translationAndDefinition';
+  };
+
   const handleSelectCard = (card) => {
-    setSelectedCards((prev) =>
-      prev.some((c) => c._id === card._id)
+    if (!card || !card._id) {
+      console.error('Invalid card:', card);
+      return;
+    }
+    setSelectedCards((prev) => {
+      const newSelected = prev.some((c) => c._id === card._id)
         ? prev.filter((c) => c._id !== card._id)
-        : [...prev, card]
-    );
+        : [...prev, card];
+      console.log('Selected cards:', newSelected);
+      return newSelected;
+    });
   };
 
   const handleStartPractice = () => {
     if (selectedCards.length === 0) {
       setError('Please select at least one flashcard to practice.');
+      console.log('Error: No flashcards selected');
       return;
     }
+    console.log('Starting practice with cards:', selectedCards);
     setIsPracticing(true);
     setError('');
     setIsFlipped(false);
+    setCurrentCardIndex(0);
+    setInitialSide(getRandomInitialSide());
   };
 
   const handleFlip = () => {
+    if (!selectedCards[currentCardIndex]) {
+      console.error('No card at index:', currentCardIndex);
+      return;
+    }
     setIsFlipped((prev) => !prev);
+    console.log('Flipped card:', selectedCards[currentCardIndex], 'isFlipped:', !isFlipped);
   };
 
   const handleNextCard = () => {
+    if (selectedCards.length === 0) {
+      console.error('No selected cards to navigate');
+      return;
+    }
     setIsFlipped(false);
     setCurrentCardIndex((prev) => (prev + 1) % selectedCards.length);
+    setInitialSide(getRandomInitialSide());
+    console.log('Next card index:', (currentCardIndex + 1) % selectedCards.length);
   };
 
   const handlePrevCard = () => {
+    if (selectedCards.length === 0) {
+      console.error('No selected cards to navigate');
+      return;
+    }
     setIsFlipped(false);
     setCurrentCardIndex((prev) => (prev - 1 + selectedCards.length) % selectedCards.length);
+    setInitialSide(getRandomInitialSide());
+    console.log('Previous card index:', (currentCardIndex - 1 + selectedCards.length) % selectedCards.length);
+  };
+
+  const handleShuffle = () => {
+    if (selectedCards.length === 0) {
+      console.error('No selected cards to shuffle');
+      return;
+    }
+    const shuffled = [...selectedCards].sort(() => Math.random() - 0.5);
+    setSelectedCards(shuffled);
+    setCurrentCardIndex(0);
+    setIsFlipped(false);
+    setInitialSide(getRandomInitialSide());
+    console.log('Shuffled cards:', shuffled);
   };
 
   const handleBackToSelection = () => {
     setIsPracticing(false);
     setCurrentCardIndex(0);
     setIsFlipped(false);
+    setInitialSide('word');
     setSelectedCards([]);
+    setError('');
+    console.log('Returning to selection view');
+  };
+
+  const speak = (text) => {
+    if (!window.speechSynthesis) {
+      console.warn('Speech Synthesis not supported');
+      return;
+    }
+    const speakNow = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+    };
+    const voicesLoaded = speechSynthesis.getVoices().length > 0;
+    if (voicesLoaded) {
+      speakNow();
+    } else {
+      speechSynthesis.onvoiceschanged = () => {
+        speakNow();
+      };
+    }
   };
 
   if (error) {
@@ -92,51 +175,125 @@ const FlashcardFlipSelected = () => {
 
   if (isPracticing) {
     const currentCard = selectedCards[currentCardIndex];
+    if (!currentCard) {
+      console.error('No current card at index:', currentCardIndex);
+      return (
+        <div className="h-screen flex items-center justify-center text-black">
+          Error: No card available
+        </div>
+      );
+    }
     return (
-      <div className="mt-32 mb-16 px-4 flex flex-col items-center space-y-6">
-        <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-6 text-black">
-          <h2 className={`text-xl font-bold ${textColor} text-center mb-4`}>
-            Flashcard Flip ({currentCardIndex + 1}/{selectedCards.length})
-          </h2>
+      <div className="mt-32 flex flex-col items-center justify-center px-4 space-y-10 relative">
+        <button
+          onClick={handleBackToSelection}
+          className="fixed top-24 px-4 py-2 bg-red-500/80 text-white rounded-xl hover:bg-red-600 transition"
+        >
+          Back to Selection
+        </button>
+        <div
+          className="w-80 h-52 relative cursor-pointer"
+          onClick={handleFlip}
+          style={{ perspective: '1000px' }}
+        >
           <div
-            className="w-full bg-white/5 backdrop-blur-sm border border-white/20 rounded-xl p-6 text-center transition-transform duration-500 hover:scale-105 cursor-pointer relative"
-            onClick={handleFlip}
+            style={{
+              transformStyle: 'preserve-3d',
+              transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)',
+              transition: 'transform 0.6s',
+            }}
+            className="w-full h-full relative"
           >
-            <p className="text-lg font-semibold">
-              {isFlipped ? (
-                <>
-                  <span className="font-medium">Translation:</span> {currentCard.translation}
-                  <br />
-                  <span className="font-medium">Definition:</span> <i>{currentCard.definition}</i>
-                </>
+            <div
+              style={{ backfaceVisibility: 'hidden' }}
+              className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
+            >
+              {initialSide === 'word' ? (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <h2 className="text-xl font-bold text-black flex items-center gap-2">
+                    {currentCard.word}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speak(currentCard.word);
+                      }}
+                      className="text-black text-lg"
+                      title="Listen"
+                    >
+                      🔊
+                    </button>
+                  </h2>
+                </div>
               ) : (
-                currentCard.word
+                <div className="flex flex-col items-center justify-center h-full space-y-2">
+                  <p className="text-sm text-center text-black">
+                    <span className="font-semibold">Translation:</span>{' '}
+                    {currentCard.translation || 'No translation available'}
+                  </p>
+                  <p className="italic text-center text-black text-sm">
+                    {currentCard.definition || 'No definition available'}
+                  </p>
+                </div>
               )}
-            </p>
-            <FaSyncAlt className="absolute top-3 right-3 text-indigo-500 text-xl" />
+            </div>
+            <div
+              style={{
+                backfaceVisibility: 'hidden',
+                transform: 'rotateY(180deg)',
+              }}
+              className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
+            >
+              {initialSide === 'word' ? (
+                <div className="flex flex-col items-center justify-center h-full space-y-2">
+                  <p className="text-sm text-center text-black">
+                    <span className="font-semibold">Translation:</span>{' '}
+                    {currentCard.translation || 'No translation available'}
+                  </p>
+                  <p className="italic text-center text-black text-sm">
+                    {currentCard.definition || 'No definition available'}
+                  </p>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full">
+                  <h2 className="text-xl font-bold text-black flex items-center gap-2">
+                    {currentCard.word}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        speak(currentCard.word);
+                      }}
+                      className="text-black text-lg"
+                      title="Listen"
+                    >
+                      🔊
+                    </button>
+                  </h2>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        <div className="w-full max-w-md flex justify-between">
-          <button
-            onClick={handlePrevCard}
-            className="px-4 py-2 bg-gray-500/80 text-white rounded-xl hover:bg-gray-600 transition flex items-center gap-2"
-            disabled={selectedCards.length === 1}
-          >
-            <FaArrowLeft /> Previous
-          </button>
-          <button
-            onClick={handleBackToSelection}
-            className="px-4 py-2 bg-red-500/80 text-white rounded-xl hover:bg-red-600 transition"
-          >
-            Back to Selection
-          </button>
-          <button
-            onClick={handleNextCard}
-            className="px-4 py-2 bg-indigo-500/80 text-white rounded-xl hover:bg-indigo-600 transition flex items-center gap-2"
-            disabled={selectedCards.length === 1}
-          >
-            Next <FaArrowRight />
-          </button>
+        <div className="flex space-x-4">
+          {['Previous', 'Shuffle', 'Next'].map((label) => {
+            const action =
+              label === 'Previous'
+                ? handlePrevCard
+                : label === 'Next'
+                ? handleNextCard
+                : handleShuffle;
+            return (
+              <button
+                key={label}
+                onClick={action}
+                className={`w-28 px-4 py-2 bg-white/20 text-black border border-white/30 backdrop-blur-md rounded-xl shadow hover:bg-white/30 transition ${
+                  (label === 'Previous' || label === 'Next') && selectedCards.length <= 1 ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+                disabled={(label === 'Previous' || label === 'Next') && selectedCards.length <= 1}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
       </div>
     );
@@ -169,7 +326,7 @@ const FlashcardFlipSelected = () => {
         </div>
       ))}
       <div className="fixed bottom-24 w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-3 flex justify-between items-center">
-        <p className={`text-sm font-medium text-black`}>
+        <p className="text-sm font-medium text-black">
           Selected: <span className="font-semibold">{selectedCards.length} flashcard(s)</span>
         </p>
         <button
