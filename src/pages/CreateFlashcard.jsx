@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
-import InputField from '../components/InputField';
 import ErrorMessage from '../components/ErrorMessage';
 import Button from '../components/Button';
 import CardContainer from '../components/CardContainer';
@@ -25,14 +24,13 @@ const CreateFlashcard = () => {
     e.preventDefault();
     setError('');
     try {
-      console.log('Creating flashcard:', { word, translation, definition, group });
-      const response = await axios.post(
+      await axios.post(
         `${import.meta.env.VITE_API_URL}/api/flashcards`,
         {
           word,
           translation,
           definition,
-          group,
+          group: group.trim() || 'Ungrouped',
         },
         {
           headers: {
@@ -41,61 +39,76 @@ const CreateFlashcard = () => {
           },
         }
       );
-      console.log('Create flashcard response:', { status: response.status, data: response.data });
       setWord('');
       setTranslation('');
       setDefinition('');
       setGroup('');
       navigate('/list');
     } catch (err) {
-      console.error('Create flashcard error:', {
-        message: err.message,
-        status: err.response?.status,
-        data: err.response?.data,
-        url: err.config?.url,
-      });
       setError(err.response?.data?.error || err.message || 'Failed to create flashcard');
     }
   };
 
   return (
     <div className="pb-14 mt-6 flex items-center justify-center px-4 overflow-hidden">
-      <CardContainer className="space-y-3">
+      <CardContainer noShadow={true} className="space-y-3">
         <ErrorMessage error={error} />
         <form onSubmit={handleSubmit} className="space-y-3">
-          <InputField
-            label="Word"
-            name="word"
-            value={word}
-            onChange={(e) => setWord(e.target.value)}
-            placeholder="Enter word"
-            required
-          />
-          <InputField
-            label="Translation"
-            name="translation"
-            value={translation}
-            onChange={(e) => setTranslation(e.target.value)}
-            placeholder="Enter translation"
-            required
-          />
-          <InputField
-            label="Definition"
-            name="definition"
-            value={definition}
-            onChange={(e) => setDefinition(e.target.value)}
-            placeholder="Enter definition"
-            required
-            isTextarea
-          />
-          <InputField
-            label="Group"
-            name="group"
-            value={group}
-            onChange={(e) => setGroup(e.target.value)}
-            placeholder="Enter group name (e.g., Day 1)"
-            required
-          />
+          <div>
+            <label htmlFor="word" className="text-black text-sm mb-1 block">
+              Word
+            </label>
+            <input
+              id="word"
+              name="word"
+              value={word}
+              onChange={(e) => setWord(e.target.value)}
+              placeholder="Enter word"
+              required
+              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
+            />
+          </div>
+          <div>
+            <label htmlFor="translation" className="text-black text-sm mb-1 block">
+              Translation
+            </label>
+            <input
+              id="translation"
+              name="translation"
+              value={translation}
+              onChange={(e) => setTranslation(e.target.value)}
+              placeholder="Enter translation"
+              required
+              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
+            />
+          </div>
+          <div>
+            <label htmlFor="definition" className="text-black text-sm mb-1 block">
+              Definition
+            </label>
+            <textarea
+              id="definition"
+              name="definition"
+              value={definition}
+              onChange={(e) => setDefinition(e.target.value)}
+              placeholder="Enter definition"
+              required
+              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20 resize-none h-20"
+            />
+          </div>
+          <div>
+            <label htmlFor="group" className="text-black text-sm mb-1 block">
+              Group
+            </label>
+            <input
+              id="group"
+              name="group"
+              value={group}
+              onChange={(e) => setGroup(e.target.value)}
+              placeholder='Enter group name (optional, defaults to "Ungrouped")'
+              className="w-full rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
+            />
+          </div>
           <Button type="submit" variant="primary">
             Save Flashcard
           </Button>

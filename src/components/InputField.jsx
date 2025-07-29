@@ -5,7 +5,7 @@ const InputField = ({ label, type = 'text', name, value, onChange, placeholder, 
   
   return (
     <div>
-      <label className={`${textColor} text-sm mb-1 block`}>{label}</label>
+      <label className={`text-white text-sm mb-1 block`}>{label}</label>
       {isTextarea ? (
         <textarea
           name={name}

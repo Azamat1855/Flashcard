@@ -17,25 +17,21 @@ const Exercise = () => {
   const exerciseOptions = [
     {
       title: 'Flashcard Flip',
-      description: 'Flip through flashcards to test your memory of words and their meanings.',
       icon: <GoArrowSwitch  className="text-indigo-500 text-2xl" />,
       path: '/exercise/flip',
     },
     {
       title: 'Flashcard Flip (Selected)',
-      description: 'Choose specific flashcards to flip through and test your memory.',
       icon: <IoSyncOutline  className="text-indigo-500 text-2xl" />,
       path: '/exercise/flip-selected',
     },
     {
       title: 'Spelling Practice',
-      description: 'Type the correct word based on its translation and definition.',
       icon: <BsKeyboard  className="text-indigo-500 text-2xl" />,
       path: '/exercise/spelling',
     },
     {
       title: 'Spelling Practice (Selected)',
-      description: 'Choose specific words to focus on for a customized practice session.',
       icon: <IoIosList  className="text-indigo-500 text-2xl" />,
       path: '/exercise/select',
     },
