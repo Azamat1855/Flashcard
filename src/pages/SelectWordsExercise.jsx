@@ -133,7 +133,7 @@ const SelectWordsExercise = () => {
   }
 
   return (
-    <div className="mt-32 mb-24 px-4 flex flex-col items-center space-y-4 relative">
+    <div className="mt-12 mb-24 px-4 flex flex-col items-center space-y-4 relative">
       
       {Object.keys(groupedFlashcards).sort().map((group) => {
         const groupCards = groupedFlashcards[group] || [];

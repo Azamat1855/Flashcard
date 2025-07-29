@@ -133,13 +133,8 @@ const FlashcardFlipSelected = () => {
   }
 
   return (
-    <div className="mt-32 mb-24 px-4 flex flex-col items-center space-y-4 relative">
-      <button
-        onClick={handleBackToExercise}
-        className="fixed top-4 left-4 px-4 py-2 bg-red-500/80 text-white rounded-xl hover:bg-red-600 transition"
-      >
-        Back to Selection
-      </button>
+    <div className="mt-12 mb-24 px-4 flex flex-col items-center space-y-4 relative">
+      
       {Object.keys(groupedFlashcards).sort().map((group) => {
         const groupCards = groupedFlashcards[group] || [];
         const allSelected = groupCards.length > 0 && groupCards.every((card) =>
