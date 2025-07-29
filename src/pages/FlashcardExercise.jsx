@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const FlashcardExercise = () => {
   const [flashcards, setFlashcards] = useState([]);
@@ -11,34 +11,45 @@ const FlashcardExercise = () => {
   const [error, setError] = useState('');
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     if (!user) {
+      console.log('No user, redirecting to /login');
       navigate('/login');
       return;
     }
-    const fetchFlashcards = async () => {
-      try {
-        console.log('Fetching flashcards with token:', user.token);
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        console.log('Flashcards response:', { status: response.status, data: response.data });
-        setFlashcards(response.data);
-        setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition');
-      } catch (err) {
-        console.error('Fetch flashcards error:', {
-          message: err.message,
-          status: err.response?.status,
-          data: err.response?.data,
-          url: err.config?.url,
-        });
-        setError(err.response?.data?.error || err.message || 'Failed to load flashcards');
-        setFlashcards([]);
-      }
-    };
-    fetchFlashcards();
-  }, [user, navigate]);
+
+    const selectedCards = location.state?.selectedCards;
+    if (selectedCards && Array.isArray(selectedCards) && selectedCards.length > 0) {
+      console.log('Using selected cards from location.state:', selectedCards);
+      setFlashcards(selectedCards);
+      setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition');
+    } else {
+      console.log('No selected cards, fetching all flashcards');
+      const fetchFlashcards = async () => {
+        try {
+          console.log('Fetching flashcards with token:', user.token);
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/flashcards`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+          });
+          console.log('Flashcards response:', { status: response.status, data: response.data });
+          setFlashcards(Array.isArray(response.data) ? response.data : []);
+          setInitialSide(Math.random() > 0.5 ? 'word' : 'translationAndDefinition');
+        } catch (err) {
+          console.error('Fetch flashcards error:', {
+            message: err.message,
+            status: err.response?.status,
+            data: err.response?.data,
+            url: err.config?.url,
+          });
+          setError(err.response?.data?.error || err.message || 'Failed to load flashcards');
+          setFlashcards([]);
+        }
+      };
+      fetchFlashcards();
+    }
+  }, [user, navigate, location.state]);
 
   const getRandomInitialSide = () => {
     return Math.random() > 0.5 ? 'word' : 'translationAndDefinition';
@@ -123,7 +134,7 @@ const FlashcardExercise = () => {
         >
           <div
             style={{ backfaceVisibility: 'hidden' }}
-            className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
+            className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl border border-white/20 bg-white/10 backdrop-blur-lg"
           >
             {initialSide === 'word' ? (
               <div className="flex flex-col items-center justify-center h-full">
@@ -157,7 +168,7 @@ const FlashcardExercise = () => {
               backfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
             }}
-            className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl shadow-2xl border border-white/20 bg-white/10 backdrop-blur-lg"
+            className="absolute w-full h-full flex flex-col items-center justify-center p-4 rounded-xl border border-white/20 bg-white/10 backdrop-blur-lg"
           >
             {initialSide === 'word' ? (
               <div className="flex flex-col items-center justify-center h-full space-y-2">
@@ -196,7 +207,7 @@ const FlashcardExercise = () => {
             <button
               key={label}
               onClick={action}
-              className="w-28 px-4 py-2 bg-white/20 text-black border border-white/30 backdrop-blur-md rounded-xl shadow hover:bg-white/30 transition"
+              className="w-28 px-4 py-2 bg-white/20 text-black border border-white/30 backdrop-blur-md rounded-xl hover:bg-white/30 transition"
             >
               {label}
             </button>

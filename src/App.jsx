@@ -9,7 +9,6 @@ import Exercise from './pages/Exercise';
 import FlashcardExercise from './pages/FlashcardExercise';
 import SpellingExercise from './pages/SpellingExercise';
 import SelectWordsExercise from './pages/SelectWordsExercise';
-import CustomPractice from './pages/CustomPractice';
 import FlashcardFlipSelected from './pages/FlashcardFlipSelected'; // Import new component
 import List from './pages/List';
 import NotFound from './pages/NotFound';
@@ -35,7 +34,6 @@ function App() {
                   <Route path="exercise/flip" element={<FlashcardExercise />} />
                   <Route path="exercise/spelling" element={<SpellingExercise />} />
                   <Route path="exercise/select" element={<SelectWordsExercise />} />
-                  <Route path="exercise/custom" element={<CustomPractice />} />
                   <Route path="exercise/flip-selected" element={<FlashcardFlipSelected />} /> {/* New route */}
                   <Route path="create" element={<CreateFlashcard />} />
                   <Route path="*" element={<NotFound />} />
