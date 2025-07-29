@@ -11,6 +11,7 @@ const CreateFlashcard = () => {
   const [word, setWord] = useState('');
   const [translation, setTranslation] = useState('');
   const [definition, setDefinition] = useState('');
+  const [group, setGroup] = useState('');
   const [error, setError] = useState('');
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
@@ -24,13 +25,14 @@ const CreateFlashcard = () => {
     e.preventDefault();
     setError('');
     try {
-      console.log('Creating flashcard:', { word, translation, definition });
+      console.log('Creating flashcard:', { word, translation, definition, group });
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/flashcards`,
         {
           word,
           translation,
           definition,
+          group,
         },
         {
           headers: {
@@ -43,6 +45,7 @@ const CreateFlashcard = () => {
       setWord('');
       setTranslation('');
       setDefinition('');
+      setGroup('');
       navigate('/list');
     } catch (err) {
       console.error('Create flashcard error:', {
@@ -84,6 +87,14 @@ const CreateFlashcard = () => {
             placeholder="Enter definition"
             required
             isTextarea
+          />
+          <InputField
+            label="Group"
+            name="group"
+            value={group}
+            onChange={(e) => setGroup(e.target.value)}
+            placeholder="Enter group name (e.g., Day 1)"
+            required
           />
           <Button type="submit" variant="primary">
             Save Flashcard

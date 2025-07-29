@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
+import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import ErrorMessage from '../components/ErrorMessage';
 import Modal from '../components/Modal';
 import Button from '../components/Button';
@@ -12,6 +13,7 @@ import FlashcardItem from '../components/FlashcardItem';
 const List = () => {
   const [flashcards, setFlashcards] = useState([]);
   const [sortOption, setSortOption] = useState(() => localStorage.getItem('sortOption') || 'newest');
+  const [expandedGroups, setExpandedGroups] = useState({});
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedCard, setSelectedCard] = useState(null);
@@ -19,6 +21,7 @@ const List = () => {
     word: '',
     translation: '',
     definition: '',
+    group: '',
   });
   const [error, setError] = useState('');
   const { user } = useSelector((state) => state.auth);
@@ -56,6 +59,16 @@ const List = () => {
     localStorage.setItem('sortOption', sortOption);
   }, [sortOption]);
 
+  // Group flashcards by group field
+  const groupedFlashcards = flashcards.reduce((acc, card) => {
+    const group = card.group || 'Ungrouped';
+    if (!acc[group]) {
+      acc[group] = [];
+    }
+    acc[group].push(card);
+    return acc;
+  }, {});
+
   const sortFlashcards = (cards, option) => {
     const sorted = [...cards];
     switch (option) {
@@ -72,6 +85,14 @@ const List = () => {
     }
   };
 
+  const toggleGroup = (group) => {
+    setExpandedGroups((prev) => ({
+      ...prev,
+      [group]: !prev[group],
+    }));
+    console.log('Toggled group:', group, 'Expanded:', !expandedGroups[group]);
+  };
+
   const handleDeleteClick = (card) => {
     setSelectedCard(card);
     setDeleteModalOpen(true);
@@ -79,7 +100,7 @@ const List = () => {
 
   const handleConfirmDelete = async () => {
     try {
-      console.log(('Deleting flashcard:', selectedCard._id));
+      console.log('Deleting flashcard:', selectedCard._id);
       await axios.delete(`${import.meta.env.VITE_API_URL}/api/flashcards/${selectedCard._id}`, {
         headers: { Authorization: `Bearer ${user.token}` },
       });
@@ -104,6 +125,7 @@ const List = () => {
       word: card.word,
       translation: card.translation,
       definition: card.definition,
+      group: card.group || 'Ungrouped',
     });
     setEditModalOpen(true);
   };
@@ -117,8 +139,7 @@ const List = () => {
         {
           headers: {
             'Content-Type': 'application/json',
-            Authorization: `Bearer ${user.token}`,
-          },
+            Authorization: `Bearer ${user.token}` },
         }
       );
       console.log('Flashcard updated:', response.data);
@@ -161,10 +182,9 @@ const List = () => {
   }
 
   return (
-    <div className="mt-6 mb-24 px-4 flex flex-col items-center space-y-6">
+    <div className="mt-6 mb-24 px-4 flex flex-col items-center space-y-4">
       {flashcards.length === 0 ? (
-        <div ShooterView
-          className="h-screen flex items-center justify-center text-black">
+        <div className="h-screen flex items-center justify-center text-black">
           No flashcards found.
         </div>
       ) : (
@@ -185,14 +205,34 @@ const List = () => {
             </select>
           </CardContainer>
 
-          {flashcards.map((card) => (
-            <FlashcardItem
-              key={card._id}
-              card={card}
-              onEdit={handleEditClick}
-              onDelete={handleDeleteClick}
-            />
-          ))}
+          {Object.keys(groupedFlashcards).sort().map((group) => {
+            const groupCards = groupedFlashcards[group] || [];
+            return (
+              <div key={group} className="w-full max-w-md">
+                <div
+                  className="flex items-center justify-between bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl px-4 py-3 cursor-pointer"
+                  onClick={() => toggleGroup(group)}
+                >
+                  <h2 className="text-base font-semibold text-black">{group} ({groupCards.length})</h2>
+                  <button className="text-black">
+                    {expandedGroups[group] ? <FaChevronUp /> : <FaChevronDown />}
+                  </button>
+                </div>
+                {expandedGroups[group] && (
+                  <div className="space-y-2 mt-2 transition-all duration-300">
+                    {sortFlashcards(groupCards, sortOption).map((card) => (
+                      <FlashcardItem
+                        key={card._id}
+                        card={card}
+                        onEdit={handleEditClick}
+                        onDelete={handleDeleteClick}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </>
       )}
 
@@ -207,7 +247,7 @@ const List = () => {
           </>
         }
       >
-        <p className="text-sm mb-6">
+        <p className="text-sm text-black mb-6">
           Are you sure you want to delete the flashcard for "{selectedCard?.word}"?
         </p>
       </Modal>
@@ -245,6 +285,13 @@ const List = () => {
             onChange={handleEditChange}
             placeholder="Enter definition"
             isTextarea
+          />
+          <InputField
+            label="Group"
+            name="group"
+            value={editForm.group}
+            onChange={handleEditChange}
+            placeholder="Enter group name"
           />
         </div>
       </Modal>
