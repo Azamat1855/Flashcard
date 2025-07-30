@@ -66,10 +66,10 @@ const SpellingExercise = () => {
     }
 
     const speakNow = () => {
-      const utterance = new SpeechSynthesisUtterance(text);
+      const utterance = new SpeechSynthesisUtterance(text.trim());
       utterance.lang = 'en-US';
       speechSynthesis.speak(utterance);
-      console.log('Speaking word:', text);
+      console.log('Speaking word:', text.trim());
     };
 
     const voicesLoaded = speechSynthesis.getVoices().length > 0;
@@ -91,8 +91,8 @@ const SpellingExercise = () => {
       return;
     }
     const trimmedInput = userInput.trim().toLowerCase();
-    const correctWord = currentCard.word.toLowerCase();
-    console.log('Submit:', { userInput: trimmedInput, correctWord, rawInput: userInput });
+    const correctWord = currentCard.word.trim().toLowerCase();
+    console.log('Submit:', { userInput: trimmedInput, correctWord, rawInput: userInput, rawCorrectWord: currentCard.word });
     if (trimmedInput === correctWord) {
       setFeedback('Correct!');
       setFlashcards((prev) => {
@@ -106,7 +106,7 @@ const SpellingExercise = () => {
       });
       setUserInput('');
     } else {
-      setFeedback(`Incorrect. The correct word is: ${currentCard.word}`);
+      setFeedback(`Incorrect. The correct word is: ${currentCard.word.trim()}`);
       setUserInput('');
       setCurrentIndex((prev) => (prev + 1) % flashcards.length);
     }
