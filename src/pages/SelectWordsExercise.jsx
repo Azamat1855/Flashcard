@@ -44,7 +44,6 @@ const SelectWordsExercise = () => {
     fetchFlashcards();
   }, [user, navigate]);
 
-  // Group flashcards by group field
   const groupedFlashcards = flashcards.reduce((acc, card) => {
     const group = card.group || 'Ungrouped';
     if (!acc[group]) {
@@ -86,10 +85,8 @@ const SelectWordsExercise = () => {
     setSelectedCards((prev) => {
       let newSelected;
       if (allSelected) {
-        // Deselect all cards in the group
         newSelected = prev.filter((c) => !groupCards.some((gc) => gc._id === c._id));
       } else {
-        // Select all cards in the group, avoiding duplicates
         const existingIds = new Set(prev.map((c) => c._id));
         newSelected = [
           ...prev,
@@ -134,7 +131,6 @@ const SelectWordsExercise = () => {
 
   return (
     <div className="mt-12 mb-24 px-4 flex flex-col items-center space-y-4 relative">
-      
       {Object.keys(groupedFlashcards).sort().map((group) => {
         const groupCards = groupedFlashcards[group] || [];
         const allSelected = groupCards.length > 0 && groupCards.every((card) =>
@@ -151,7 +147,7 @@ const SelectWordsExercise = () => {
                   type="checkbox"
                   checked={allSelected}
                   onChange={(e) => {
-                    e.stopPropagation(); // Prevent group toggle when clicking checkbox
+                    e.stopPropagation();
                     handleSelectGroup(group);
                   }}
                   className="w-5 h-5 text-indigo-500 bg-white/80 border-white/30 rounded focus:ring-indigo-500"
@@ -164,28 +160,28 @@ const SelectWordsExercise = () => {
               </button>
             </div>
             {expandedGroups[group] && (
-              <div className="space-y-4 mt-2 transition-all duration-300">
+              <div className="space-y-4 mt-2">
                 {groupCards.map((card) => (
                   <div
                     key={card._id}
-                    className={`w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl text-black overflow-hidden cursor-pointer transition-transform duration-300 transform hover:scale-105 ${
+                    className={`w-full bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl text-black overflow-hidden cursor-pointer ${
                       selectedCards.some((c) => c._id === card._id)
-                        ? 'border-indigo-500 bg-indigo-100/30 scale-105'
-                        : 'scale-100'
+                        ? 'border-indigo-500 bg-indigo-100/30'
+                        : ''
                     }`}
                     onClick={() => handleSelectCard(card)}
                   >
                     <div className="bg-gradient-to-l from-indigo-300 to-purple-300 backdrop-blur-sm px-6 py-3 border-b border-white/20 relative">
-                      <h2 className="text-lg font-semibold text-center">{card.word}</h2>
+                      <h2 className="text-lg font-semibold text-center text-black">{card.word}</h2>
                       {selectedCards.some((c) => c._id === card._id) && (
                         <FaCheckCircle className="absolute top-3 right-3 text-indigo-500 text-xl" />
                       )}
                     </div>
                     <div className="px-6 py-4 space-y-2">
-                      <p className="text-sm text-center">
+                      <p className="text-sm text-center text-black">
                         <span className="font-medium">Translation:</span> {card.translation}
                       </p>
-                      <p className="italic text-center">{card.definition}</p>
+                      <p className="italic text-center text-black">{card.definition}</p>
                     </div>
                   </div>
                 ))}
@@ -194,7 +190,7 @@ const SelectWordsExercise = () => {
           </div>
         );
       })}
-      <div className="fixed bottom-24 w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl shadow-lg p-3 flex justify-between items-center">
+      <div className="fixed bottom-24 w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-xl p-3 flex justify-between items-center">
         <p className="text-sm font-medium text-black">
           Selected: <span className="font-semibold">{selectedCards.length} word(s)</span>
         </p>

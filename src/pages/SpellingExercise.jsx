@@ -21,40 +21,66 @@ const SpellingExercise = () => {
       return;
     }
     const selectedCards = location.state?.selectedCards;
-    if (selectedCards && selectedCards.length > 0) {
+    console.log('Selected cards received from SelectWordsExercise:', selectedCards);
+    if (selectedCards && Array.isArray(selectedCards) && selectedCards.length > 0) {
       console.log('Using selected cards:', selectedCards);
       setFlashcards(selectedCards);
       setInitialFetchDone(true);
+    } else {
+      console.log('No selected cards, fetching all flashcards');
+      const fetchFlashcards = async () => {
+        try {
+          const apiUrl = import.meta.env.VITE_API_URL;
+          if (!apiUrl) {
+            throw new Error('VITE_API_URL is not defined in .env');
+          }
+          console.log('Fetching flashcards from:', `${apiUrl}/api/flashcards`, 'with token:', user.token);
+          const response = await axios.get(`${apiUrl}/api/flashcards`, {
+            headers: { Authorization: `Bearer ${user.token}` },
+          });
+          console.log('Flashcards response:', { status: response.status, data: response.data });
+          const cards = Array.isArray(response.data) ? response.data : [];
+          setFlashcards(cards);
+          setInitialFetchDone(true);
+        } catch (err) {
+          const errorMsg = err.response?.data?.error || err.message || 'Failed to load flashcards';
+          console.error('Fetch flashcards error:', {
+            status: err.response?.status,
+            message: errorMsg,
+            url: err.config?.url,
+          });
+          setError(errorMsg);
+          setFlashcards([]);
+          setInitialFetchDone(true);
+        }
+      };
+      fetchFlashcards();
+    }
+  }, [user, navigate, location.state]);
+
+  const speak = (text) => {
+    if (!window.speechSynthesis) {
+      console.warn('Speech Synthesis not supported');
+      setFeedback('Speech synthesis not supported in this browser');
       return;
     }
-    const fetchFlashcards = async () => {
-      try {
-        const apiUrl = import.meta.env.VITE_API_URL;
-        if (!apiUrl) {
-          throw new Error('VITE_API_URL is not defined in .env');
-        }
-        console.log('Fetching flashcards from:', `${apiUrl}/api/flashcards`, 'with token:', user.token);
-        const response = await axios.get(`${apiUrl}/api/flashcards`, {
-          headers: { Authorization: `Bearer ${user.token}` },
-        });
-        console.log('Flashcards response:', { status: response.status, data: response.data });
-        const cards = Array.isArray(response.data) ? response.data : [];
-        setFlashcards(cards);
-        setInitialFetchDone(true);
-      } catch (err) {
-        const errorMsg = err.response?.data?.error || err.message || 'Failed to load flashcards';
-        console.error('Fetch flashcards error:', {
-          status: err.response?.status,
-          message: errorMsg,
-          url: err.config?.url,
-        });
-        setError(errorMsg);
-        setFlashcards([]);
-        setInitialFetchDone(true);
-      }
+
+    const speakNow = () => {
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = 'en-US';
+      speechSynthesis.speak(utterance);
+      console.log('Speaking word:', text);
     };
-    fetchFlashcards();
-  }, [user, navigate, location.state]);
+
+    const voicesLoaded = speechSynthesis.getVoices().length > 0;
+    if (voicesLoaded) {
+      speakNow();
+    } else {
+      speechSynthesis.onvoiceschanged = () => {
+        speakNow();
+      };
+    }
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -64,16 +90,17 @@ const SpellingExercise = () => {
       setFeedback('Error: No card available');
       return;
     }
-    if (userInput.trim().toLowerCase() === currentCard.word.toLowerCase()) {
+    const trimmedInput = userInput.trim().toLowerCase();
+    const correctWord = currentCard.word.toLowerCase();
+    console.log('Submit:', { userInput: trimmedInput, correctWord, rawInput: userInput });
+    if (trimmedInput === correctWord) {
       setFeedback('Correct!');
-      // Remove the correctly spelled card
       setFlashcards((prev) => {
         const newFlashcards = prev.filter((_, index) => index !== currentIndex);
         console.log('Card removed, remaining flashcards:', newFlashcards);
-        // Adjust currentIndex before updating flashcards
         setCurrentIndex((prev) => {
-          if (newFlashcards.length === 0) return 0; // No cards left
-          return prev >= newFlashcards.length ? 0 : prev; // Stay in bounds
+          if (newFlashcards.length === 0) return 0;
+          return prev >= newFlashcards.length ? 0 : prev;
         });
         return newFlashcards;
       });
@@ -81,10 +108,8 @@ const SpellingExercise = () => {
     } else {
       setFeedback(`Incorrect. The correct word is: ${currentCard.word}`);
       setUserInput('');
-      // Move to next card, keeping incorrect card in the list
       setCurrentIndex((prev) => (prev + 1) % flashcards.length);
     }
-    console.log('Submit:', { userInput, correctWord: currentCard.word, feedback });
   };
 
   const handleNext = () => {
@@ -118,7 +143,7 @@ const SpellingExercise = () => {
   if (flashcards.length === 0) {
     return (
       <div className="mt-32 flex flex-col items-center justify-center px-4 space-y-6 relative">
-        <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-6 text-black">
+        <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-black">
           <p className="text-center text-lg font-semibold">Congratulations! All words spelled correctly.</p>
         </div>
       </div>
@@ -137,7 +162,7 @@ const SpellingExercise = () => {
           Back to Selection
         </button>
       )}
-      <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl shadow-xl p-6 text-black">
+      <div className="w-full max-w-md bg-white/10 backdrop-blur-md border border-white/20 rounded-2xl p-6 text-black">
         <h2 className="text-xl font-bold text-center mb-4">
           Words left: {flashcards.length}
         </h2>
@@ -151,16 +176,23 @@ const SpellingExercise = () => {
             </p>
           </div>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium block text-center">Enter the word:</label>
+            <div className="flex items-center space-x-2">
               <input
                 type="text"
                 value={userInput}
                 onChange={(e) => setUserInput(e.target.value)}
-                className="w-full mt-2 rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
+                className="flex-1 mt-2 rounded-xl px-3 py-1.5 bg-white/80 text-black placeholder-black/50 outline-none focus:ring-2 focus:ring-black/20"
                 placeholder="Type the word"
                 required
               />
+              <button
+                type="button"
+                onClick={() => speak(currentCard.word)}
+                className="mt-2 px-3 py-1.5 bg-white/20 text-black border border-white/30 rounded-xl hover:bg-white/30 transition"
+                title="Listen to the word"
+              >
+                🔊
+              </button>
             </div>
             {feedback && (
               <p className={`text-center text-sm ${feedback.includes('Correct') ? 'text-green-500' : 'text-red-500'}`}>
