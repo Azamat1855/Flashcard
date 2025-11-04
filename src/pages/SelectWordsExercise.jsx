@@ -113,6 +113,11 @@ const SelectWordsExercise = () => {
     console.log('Returning to exercise selection');
   };
 
+  const handleViewStats = () => {
+    navigate('/stats');
+    console.log('Navigating to stats page');
+  };
+
   if (error) {
     return (
       <div className="h-screen flex items-center justify-center text-black">
@@ -131,6 +136,7 @@ const SelectWordsExercise = () => {
 
   return (
     <div className="mt-12 mb-24 px-4 flex flex-col items-center space-y-4 relative">
+
       {Object.keys(groupedFlashcards).sort().map((group) => {
         const groupCards = groupedFlashcards[group] || [];
         const allSelected = groupCards.length > 0 && groupCards.every((card) =>

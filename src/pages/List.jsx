@@ -26,6 +26,7 @@ const List = () => {
   });
   const [newGroupName, setNewGroupName] = useState("");
   const [error, setError] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const { user } = useSelector((state) => state.auth);
   const navigate = useNavigate();
 
@@ -44,7 +45,14 @@ const List = () => {
 
   useEffect(() => localStorage.setItem("sortOption", sortOption), [sortOption]);
 
-  const groupedFlashcards = flashcards.reduce((acc, card) => {
+  const filteredFlashcards = flashcards.filter(
+    (card) =>
+      card.word.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.translation.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      card.definition.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
+  const groupedFlashcards = filteredFlashcards.reduce((acc, card) => {
     const group = card.group || "Ungrouped";
     acc[group] = acc[group] || [];
     acc[group].push(card);
@@ -191,8 +199,8 @@ const List = () => {
         </div>
       ) : (
         <>
-          <CardContainer className="text-black flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-2 sm:space-y-0">
-            <p className="text-sm font-medium text-center sm:text-left">
+          <CardContainer className="text-black flex flex-col  sm:justify-between space-y-2">
+            <p className="text-sm font-medium text-center">
               Total Words:{" "}
               <span className="font-semibold">{flashcards.length}</span>
             </p>
@@ -206,6 +214,15 @@ const List = () => {
               <option value="az">A–Z</option>
               <option value="za">Z–A</option>
             </select>
+            <div className="w-full max-w-md">
+            <input
+              type="text"
+              placeholder="Search for a word..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full mt-3 px-3 py-2 border bg-white/30 border-gray-300 rounded-lg shadow-sm text-black focus:outline-none focus:ring-2 focus:ring-blue-400"
+            />
+          </div>
           </CardContainer>
 
           {Object.keys(groupedFlashcards)

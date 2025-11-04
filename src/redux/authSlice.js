@@ -1,25 +1,29 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
+const apiUrl = import.meta.env.VITE_API_URL;
+
 export const login = createAsyncThunk('auth/login', async ({ email, password }, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, { email, password }, {
+    const response = await axios.post(`${apiUrl}/api/auth/login`, { email, password }, {
       headers: { 'Content-Type': 'application/json' },
     });
     return { token: response.data.token, email };
   } catch (err) {
-    return rejectWithValue(err.response?.data?.error || err.message || 'Login failed');
+    console.error('Login error:', err.response?.data?.error || err.message);
+    return rejectWithValue(err.response?.data?.error || 'Login failed');
   }
 });
 
 export const register = createAsyncThunk('auth/register', async ({ email, password }, { rejectWithValue }) => {
   try {
-    const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, { email, password }, {
+    const response = await axios.post(`${apiUrl}/api/auth/register`, { email, password }, {
       headers: { 'Content-Type': 'application/json' },
     });
     return { token: response.data.token, email };
   } catch (err) {
-    return rejectWithValue(err.response?.data?.error || err.message || 'Registration failed');
+    console.error('Register error:', err.response?.data?.error || err.message);
+    return rejectWithValue(err.response?.data?.error || 'Registration failed');
   }
 });
 
@@ -32,6 +36,7 @@ const authSlice = createSlice({
   },
   reducers: {
     logout: (state) => {
+      console.log('Logging out user');
       state.user = null;
       state.loading = false;
       state.error = null;
