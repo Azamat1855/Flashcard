@@ -31,7 +31,7 @@ const Register = () => {
   };
 
   return (
-    <div className="h-screen flex items-center justify-center px-4">
+    <div className="h-screen flex items-center justify-center px-4 bg-gradient-to-l from-indigo-400 to-purple-400">
       <CardContainer className="space-y-4">
         <h2 className={`text-2xl font-bold ${textColor} text-center`}>Register</h2>
         <ErrorMessage error={error || reduxError} />
@@ -66,7 +66,7 @@ const Register = () => {
           </Button>
           <p className={`${textColor} text-sm text-center`}>
             Already have an account?{' '}
-            <a href="/login" className="text-indigo-500 hover:underline">
+            <a href="/login" className="text-indigo-800 hover:underline">
               Login
             </a>
           </p>
